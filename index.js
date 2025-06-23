@@ -1,13 +1,13 @@
-// index.js（用于 Railway，加入 CORS 支持）
+// index.js（用于 Railway，含 CORS 支持，适配 /dazhongruanjian 路径）
 
 const express = require('express');
 const qiniu = require('qiniu');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// ✅ 加入 CORS 支持，允许跨域访问 API
+// ✅ 启用 CORS，允许跨域访问前端页面
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*'); // 允许所有来源
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
   res.setHeader('Access-Control-Allow-Headers', '*');
   next();
@@ -22,6 +22,7 @@ const config = new qiniu.conf.Config();
 config.zone = qiniu.zone.Zone_as0; // 亚太-新加坡
 const bucketManager = new qiniu.rs.BucketManager(mac, config);
 
+// ✅ 列出子文件夹
 const listFolders = (prefix) => new Promise((resolve, reject) => {
   bucketManager.listPrefix(bucket, {
     prefix,
@@ -38,6 +39,7 @@ const listFolders = (prefix) => new Promise((resolve, reject) => {
   });
 });
 
+// ✅ 列出图片（按数字顺序）
 const listImages = (prefix) => new Promise((resolve, reject) => {
   bucketManager.listPrefix(bucket, {
     prefix,
@@ -55,6 +57,7 @@ const listImages = (prefix) => new Promise((resolve, reject) => {
   });
 });
 
+// ✅ 获取年份列表
 app.get('/api/years', async (req, res) => {
   try {
     const years = await listFolders('dazhongruanjian/');
@@ -64,6 +67,7 @@ app.get('/api/years', async (req, res) => {
   }
 });
 
+// ✅ 获取某年份下的期号
 app.get('/api/issues', async (req, res) => {
   const { year } = req.query;
   if (!year) return res.status(400).json({ error: '缺少年份参数' });
@@ -75,18 +79,20 @@ app.get('/api/issues', async (req, res) => {
   }
 });
 
+// ✅ 获取指定期刊下所有图片地址（拼接 baseUrl）
 app.get('/api/pages', async (req, res) => {
   const { year, issue } = req.query;
   if (!year || !issue) return res.status(400).json({ error: '缺少 year 或 issue 参数' });
   try {
     const pages = await listImages(`dazhongruanjian/${year}/${issue}/`);
-    const baseUrl = `https://www.chinesegamearchive.com/${year}/${issue}/`;
+    const baseUrl = `https://www.chinesegamearchive.com/dazhongruanjian/${year}/${issue}/`;
     res.json(pages.map(name => baseUrl + name));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// ✅ 根目录测试用
 app.get('/', (req, res) => {
   res.send('杂志 API 服务运行中');
 });
