@@ -75,8 +75,9 @@ app.get('/api/pages', async (req, res) => {
   const { year, issue } = req.query;
   if (!year || !issue) return res.status(400).json({ error: '缺少 year 或 issue 参数' });
   try {
-    const pages = await listImages(`dazhongruanjian/${year}/${issue}/`);
-    res.json(pages);
+const pages = await listImages(`dazhongruanjian/${year}/${issue}/`);
+const baseUrl = `https://www.chinesegamearchive.com/${year}/${issue}/`;
+return json(200, pages.map(name => baseUrl + name));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
