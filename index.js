@@ -1,9 +1,17 @@
-// index.js（适用于 Railway，使用 Express 启动 HTTP 服务）
+// index.js（用于 Railway，加入 CORS 支持）
 
 const express = require('express');
 const qiniu = require('qiniu');
 const app = express();
 const port = process.env.PORT || 3000;
+
+// ✅ 加入 CORS 支持，允许跨域访问 API
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*'); // 允许所有来源
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+  next();
+});
 
 const accessKey = process.env.QINIU_ACCESS_KEY;
 const secretKey = process.env.QINIU_SECRET_KEY;
