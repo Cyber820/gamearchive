@@ -1,11 +1,9 @@
-// index.js（用于 Railway，含 CORS 支持，适配 /dazhongruanjian 路径）
-
 const express = require('express');
 const qiniu = require('qiniu');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// ✅ 启用 CORS，允许跨域访问前端页面
+// ✅ CORS 支持：允许来自前端页面的跨域访问
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
@@ -13,6 +11,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// ✅ Referer 校验：仅允许通过你的域名访问 API 接口
+const allowedReferer = 'https://www.chinesegamearchive.com';
+app.use('/api', (req, res, next) => {
+  const referer = req.get('referer') || '';
+  if (referer.startsWith(allowedReferer)) {
+    next();
+  } else {
+    res.status(403).send('Forbidden: Invalid referer');
+  }
+});
+
+// 七牛配置
 const accessKey = process.env.QINIU_ACCESS_KEY;
 const secretKey = process.env.QINIU_SECRET_KEY;
 const bucket = 'dazhongruanjian';
@@ -79,7 +89,7 @@ app.get('/api/issues', async (req, res) => {
   }
 });
 
-// ✅ 获取指定期刊下所有图片地址（拼接 baseUrl）
+// ✅ 获取指定期刊下所有图片地址
 app.get('/api/pages', async (req, res) => {
   const { year, issue } = req.query;
   if (!year || !issue) return res.status(400).json({ error: '缺少 year 或 issue 参数' });
@@ -92,7 +102,7 @@ app.get('/api/pages', async (req, res) => {
   }
 });
 
-// ✅ 根目录测试用
+// ✅ 根路径测试
 app.get('/', (req, res) => {
   res.send('杂志 API 服务运行中');
 });
